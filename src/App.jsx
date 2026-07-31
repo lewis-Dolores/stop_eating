@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { isLateNight, getCurrentTimeText } from '../utils/timeUtils'
-import { detectPerson } from '../utils/personDetection'
-import { generatePersuasionPrompt } from '../utils/gemmaIntegration'
-import { speak, stopSpeaking } from '../utils/ttsEngine'
+import { isLateNight, getCurrentTimeText } from './utils/timeUtils'
+import { detectPerson } from './utils/personDetection'
+import { generatePersuasionPrompt } from './utils/gemmaIntegration'
+import { speak, stopSpeaking } from './utils/ttsEngine'
 
 export default function App() {
   const [isMonitoring, setIsMonitoring] = useState(false)
@@ -22,8 +22,8 @@ export default function App() {
       try {
         setStatus('載入模型中...')
         // 預先載入模型（可選）
-        await import('../utils/personDetection')
-        await import('../utils/gemmaIntegration')
+        await import('./utils/personDetection')
+        await import('./utils/gemmaIntegration')
         setIsLoading(false)
         setStatus('就緒')
       } catch (error) {

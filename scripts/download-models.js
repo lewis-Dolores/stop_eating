@@ -17,8 +17,8 @@ const COCO_FILES = [
   'shard4.bin'
 ];
 
-// Gemma-2b-it 模型檔案 (使用 Transformers.js 格式)
-const GEMMA_FILES = [
+// LaMini-Flan-T5-Small 模型檔案 (使用 Transformers.js 格式)
+const FLAN_FILES = [
   'config.json',
   'tokenizer.json', 
   'tokenizer_config.json',
@@ -27,7 +27,7 @@ const GEMMA_FILES = [
 ];
 
 const COCO_BASE_URL = 'https://tfhub.dev/model/tfjs/coco-ssd/1/default/1';
-const GEMMA_BASE_URL = 'https://huggingface.co/Xenova/gemma-2b-it/resolve/main';
+const FLAN_BASE_URL = 'https://huggingface.co/Xenova/LaMini-Flan-T5-Small/resolve/main';
 
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
@@ -69,13 +69,13 @@ async function downloadCocoSsd() {
   }
 }
 
-async function downloadGemma() {
-  console.log('📥 Downloading Gemma-2b-it model...');
+async function downloadFlan() {
+  console.log('📥 Downloading LaMini-Flan-T5-Small model...');
   const gemmaDir = path.join(MODELS_DIR, 'gemma-2b-it');
   fs.mkdirSync(gemmaDir, { recursive: true });
   
-  for (const file of GEMMA_FILES) {
-    const url = `${GEMMA_BASE_URL}/${file}`;
+  for (const file of FLAN_FILES) {
+    const url = `${FLAN_BASE_URL}/${file}`;
     const dest = path.join(gemmaDir, file);
     await downloadFile(url, dest);
   }
@@ -87,7 +87,7 @@ async function main() {
     
     await Promise.all([
       downloadCocoSsd(),
-      downloadGemma()
+      downloadFlan()
     ]);
     
     console.log('✅ All models downloaded successfully!');

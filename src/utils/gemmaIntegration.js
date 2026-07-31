@@ -11,7 +11,7 @@ export async function loadGemmaModel() {
   // 使用 Gemma-2B-it 量化模型
   generator = await pipeline(
     'text-generation',
-    'Xenova/gemma-2b-it',
+    'Xenova/LaMini-Flan-T5-Small',
     {
       quantized: true,
       device: 'webgpu' // 優先使用 GPU

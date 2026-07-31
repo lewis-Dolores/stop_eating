@@ -1,33 +1,18 @@
 import fs from 'fs';
 import path from 'path';
-import https from 'https';
 import { fileURLToPath } from 'url';
+import https from 'https';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
 
-const MODELS_DIR = path.join(__dirname, '..', 'public', 'models');
+const modelsDir = path.join(rootDir, 'public', 'models');
 
-// COCO-SSD 模型檔案列表
-const COCO_FILES = [
-  'model.json',
-  'shard1.bin',
-  'shard2.bin',
-  'shard3.bin',
-  'shard4.bin'
-];
-
-// LaMini-Flan-T5-Small 模型檔案 (使用 Transformers.js 格式)
-const FLAN_FILES = [
-  'config.json',
-  'tokenizer.json', 
-  'tokenizer_config.json',
-  'vocab.json',
-  'merges.txt'
-];
-
-const COCO_BASE_URL = 'https://tfhub.dev/model/tfjs/coco-ssd/1/default/1';
-const FLAN_BASE_URL = 'https://huggingface.co/Xenova/LaMini-Flan-T5-Small/resolve/main';
+// Create models directory
+if (!fs.existsSync(modelsDir)) {
+  fs.mkdirSync(modelsDir, { recursive: true });
+}
 
 async function downloadFile(url, dest) {
   return new Promise((resolve, reject) => {
@@ -38,16 +23,13 @@ async function downloadFile(url, dest) {
         downloadFile(response.headers.location, dest).then(resolve).catch(reject);
         return;
       }
-      
       if (response.statusCode !== 200) {
         reject(new Error(`Failed to download ${url}: ${response.statusCode}`));
         return;
       }
-      
       response.pipe(file);
       file.on('finish', () => {
         file.close();
-        console.log(`✓ Downloaded: ${dest}`);
         resolve();
       });
     }).on('error', (err) => {
@@ -57,42 +39,29 @@ async function downloadFile(url, dest) {
   });
 }
 
-async function downloadCocoSsd() {
-  console.log('📥 Downloading COCO-SSD model...');
-  const cocoDir = path.join(MODELS_DIR, 'coco-ssd');
-  fs.mkdirSync(cocoDir, { recursive: true });
-  
-  for (const file of COCO_FILES) {
-    const url = `${COCO_BASE_URL}/${file}`;
-    const dest = path.join(cocoDir, file);
-    await downloadFile(url, dest);
-  }
-}
-
-async function downloadFlan() {
-  console.log('📥 Downloading LaMini-Flan-T5-Small model...');
-  const gemmaDir = path.join(MODELS_DIR, 'gemma-2b-it');
-  fs.mkdirSync(gemmaDir, { recursive: true });
-  
-  for (const file of FLAN_FILES) {
-    const url = `${FLAN_BASE_URL}/${file}`;
-    const dest = path.join(gemmaDir, file);
-    await downloadFile(url, dest);
-  }
-}
-
 async function main() {
   try {
-    fs.mkdirSync(MODELS_DIR, { recursive: true });
+    console.log('📥 Downloading COCO-SSD model...');
+    const cocoBase = 'https://tfhub.dev/models/tfjs/coco-ssd/default/1/model.json';
+    await downloadFile(cocoBase, path.join(modelsDir, 'coco-ssd', 'model.json'));
     
-    await Promise.all([
-      downloadCocoSsd(),
-      downloadFlan()
-    ]);
-    
-    console.log('✅ All models downloaded successfully!');
+    // Download shard files for COCO-SSD
+    const shardCount = 4;
+    for (let i = 0; i < shardCount; i++) {
+      const shardUrl = `https://tfhub.dev/models/tfjs/coco-ssd/default/1/group1-shard${i.toString().padStart(2, '0')}_of_${shardCount.toString().padStart(2, '0')}`;
+      await downloadFile(shardUrl, path.join(modelsDir, 'coco-ssd', `group1-shard${i.toString().padStart(2, '0')}_of_4`));
+    }
+    console.log('✅ COCO-SSD downloaded');
+
+    console.log('📥 Downloading MobileNet (lightweight alternative)...');
+    // Use MobileNet which is smaller and public
+    const mobilenetModel = 'https://tfhub.dev/models/tfjs/mobilenet_v2_100_224/classification/1/model.json';
+    await downloadFile(mobilenetModel, path.join(modelsDir, 'mobilenet', 'model.json'));
+    console.log('✅ MobileNet downloaded');
+
+    console.log('✨ Models ready!');
   } catch (error) {
-    console.error('❌ Error downloading models:', error.message);
+    console.error('❌ Error:', error.message);
     process.exit(1);
   }
 }
